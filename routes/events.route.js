@@ -122,6 +122,11 @@ router.get('/', async (req, res, next) => {
 // ===========================================================================
 
 router.get('/:id', async (req, res, next) => {
+  const { error } = Event.validateGuid(req.params.id)
+  if (error) {
+    return res.status(httpStatus.badRequest).send(error.details[0].message)
+  }
+
   try {
     const event = await Event.findOne({
       where: {
@@ -144,6 +149,11 @@ router.get('/:id', async (req, res, next) => {
 // ===========================================================================
 
 router.put('/:id', async (req, res, next) => {
+  const { guidError } = Event.validateGuid(req.params.id)
+  if (guidError) {
+    return res.status(httpStatus.badRequest).send(guidError.details[0].message)
+  }
+
   const { error } = Event.validateModel(req.body)
   if (error) {
     return res
@@ -171,6 +181,11 @@ router.put('/:id', async (req, res, next) => {
 // ===========================================================================
 
 router.delete('/:id', async (req, res, next) => {
+  const { error } = Event.validateGuid(req.params.id)
+  if (error) {
+    return res.status(httpStatus.badRequest).send(error.details[0].message)
+  }
+
   try {
     const event = await Event.findByPk(req.params.id)
     if (!event) {

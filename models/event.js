@@ -34,6 +34,14 @@ class Event extends Model {
 
     return schema.validate(event)
   }
+
+  static validateGuid(id) {
+    const schema = Joi.object({
+      id: Joi.string().guid({ version: 'uuidv4' }),
+    })
+
+    return schema.validate({ id })
+  }
 }
 
 // ===========================================================================
@@ -43,7 +51,7 @@ class Event extends Model {
 Event.init(
   {
     id: {
-      type: DataTypes.UUID,
+      type: DataTypes.UUIDV4,
       allowNull: false,
       primaryKey: true,
       defaultValue: DataTypes.UUIDV4,

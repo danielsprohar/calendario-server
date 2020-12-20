@@ -127,5 +127,41 @@ describe('/api/events', () => {
   })
 
   // ======================================================
+
+  describe('GET /:id', () => {
+    it('should return 404 if the event does not exist', async () => {
+      const res = await request(server)
+        .get('/api/events/6f5a6af4-6af8-4296-acd9-b428419aa0ae')
+        .send()
+      expect(res.status).toBe(httpStatusCodes.notFound)
+    })
+
+    it('should return 200', async () => {
+      await initDb()
+
+      const events = await Event.findAll({
+        order: ['startDate'],
+        limit: 1,
+        offset: 0,
+      })
+
+      const id = events[0].id
+      const res = await request(server).get(`/api/events/${id}`).send()
+      expect(res.status).toBe(httpStatusCodes.ok)
+    })
+
+    describe('Route parameters (entity id)', () => {
+      it('should return 400 for an invalid UUID', async () => {
+        const res = await request(server).get('/api/events/hello-there').send()
+        expect(res.status).toBe(httpStatusCodes.badRequest)
+      })
+
+      it('should return 400 for using an integer instead of a UUID', async () => {
+        const res = await request(server).get('/api/events/1').send()
+        expect(res.status).toBe(httpStatusCodes.badRequest)
+      })
+    })
+  })
+
   // ======================================================
 })
