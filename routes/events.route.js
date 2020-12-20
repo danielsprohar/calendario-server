@@ -11,7 +11,7 @@ const { Op } = require('sequelize')
 // ===========================================================================
 
 router.post('/', async (req, res, next) => {
-  const { error } = Event.validateModel(req.body)
+  const { error } = Event.validateCreateModel(req.body)
   if (error) {
     return res
       .status(httpStatus.unprocessableEntity)
@@ -20,6 +20,15 @@ router.post('/', async (req, res, next) => {
 
   const start = new Date(req.body.startDate)
   const end = new Date(req.body.endDate)
+
+  if (!Event.validateDateInterval(start, end)) {
+    return res
+      .status(httpStatus.unprocessableEntity)
+      .send(
+        'Invalid date interval. The "startDate" must be less than or equal to the "endDate"'
+      )
+  }
+
   const predicates = [
     {
       start_date: {
@@ -149,16 +158,18 @@ router.get('/:id', async (req, res, next) => {
 // ===========================================================================
 
 router.put('/:id', async (req, res, next) => {
-  const { guidError } = Event.validateGuid(req.params.id)
-  if (guidError) {
-    return res.status(httpStatus.badRequest).send(guidError.details[0].message)
+  let validationResult = Event.validateGuid(req.params.id)
+  if (validationResult.error) {
+    return res
+      .status(httpStatus.badRequest)
+      .send(validationResult.error.details[0].message)
   }
 
-  const { error } = Event.validateModel(req.body)
-  if (error) {
+  validationResult = Event.validateUpdateModel(req.body)
+  if (validationResult.error) {
     return res
       .status(httpStatus.unprocessableEntity)
-      .send(error.details[0].message)
+      .send(validationResult.error.details[0].message)
   }
 
   try {
@@ -168,6 +179,14 @@ router.put('/:id', async (req, res, next) => {
     }
 
     Object.assign(event, req.body)
+    if (!Event.validateDateInterval(event.startDate, event.endDate)) {
+      return res
+        .status(httpStatus.unprocessableEntity)
+        .send(
+          'Invalid date interval. The "startDate" must be less than or equal to the "endDate"'
+        )
+    }
+
     await event.save()
 
     res.status(httpStatus.noContent).send()

@@ -21,7 +21,7 @@ const repeatValues = [
 // ===========================================================================
 
 class Event extends Model {
-  static validateModel(event) {
+  static validateCreateModel(model) {
     const schema = Joi.object({
       id: Joi.string(),
       title: Joi.string().max(512).required(),
@@ -32,7 +32,20 @@ class Event extends Model {
       description: Joi.string().max(2048),
     })
 
-    return schema.validate(event)
+    return schema.validate(model)
+  }
+
+  static validateUpdateModel(model) {
+    const schema = Joi.object({
+      title: Joi.string().max(512),
+      startDate: Joi.date(),
+      endDate: Joi.date(),
+      status: Joi.string().valid(...statuses),
+      repeats: Joi.string().valid(...repeatValues),
+      description: Joi.string().max(2048),
+    })
+
+    return schema.validate(model)
   }
 
   static validateGuid(id) {
@@ -41,6 +54,12 @@ class Event extends Model {
     })
 
     return schema.validate({ id })
+  }
+
+  static validateDateInterval(startDate, endDate) {
+    const s = new Date(startDate)
+    const e = new Date(endDate)
+    return s.valueOf() <= e.valueOf()
   }
 }
 
