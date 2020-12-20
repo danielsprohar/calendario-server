@@ -3,6 +3,7 @@ const router = express.Router()
 const logger = require('../logger/winston')
 const Event = require('../models/event')
 const httpStatus = require('../constants/http-status-codes')
+const regexPatterns = require('../constants/regex-patterns')
 const { Op } = require('sequelize')
 
 // ===========================================================================
@@ -16,6 +17,9 @@ router.post('/', async (req, res, next) => {
       .status(httpStatus.unprocessableEntity)
       .send(error.details[0].message)
   }
+
+  const startDate = req.body.startDate
+  const endDate = req.body.endDate
 
   try {
     const event = await Event.create(req.body)
@@ -40,24 +44,40 @@ router.get('/', async (req, res, next) => {
     offset: pageIndex * pageSize,
   }
 
-  if (req.query.startDate && req.query.endDate) {
-    const start = new Date(+req.query.startDate)
-    const end = new Date(+req.query.endDate)
+  if (
+    (req.query.startDate && !req.query.endDate) ||
+    (req.query.endDate && !req.query.startDate)
+  ) {
+    return res
+      .status(httpStatus.badRequest)
+      .send(
+        'To query events by a date interval, both starting and ending dates are required'
+      )
+  }
 
-    try {
-      options.where = [
-        {
-          start_date: {
-            [Op.between]: [start, end],
-          },
-          end_date: {
-            [Op.between]: [start, end],
-          },
+  if (req.query.startDate && req.query.endDate) {
+    // Check if the query parameters are in '2020-03-15' format or milliseconds since epoch.
+    const start = new Date(
+      req.query.startDate.search(regexPatterns.onlyDigits) === -1
+        ? req.query.startDate
+        : +req.query.startDate
+    )
+    const end = new Date(
+      req.query.endDate.search(regexPatterns.onlyDigits) === -1
+        ? req.query.endDate
+        : +req.query.endDate
+    )
+
+    options.where = [
+      {
+        start_date: {
+          [Op.between]: [start, end],
         },
-      ]
-    } catch (e) {
-      return next(e)
-    }
+        end_date: {
+          [Op.between]: [start, end],
+        },
+      },
+    ]
   }
 
   try {
