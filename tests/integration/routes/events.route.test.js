@@ -178,6 +178,13 @@ describe('/api/events', () => {
   // ======================================================
 
   describe('PUT /:id', () => {
+    it('should return 404 if the event does not exist', async () => {
+      const res = await request(server)
+        .put('/api/events/6f5a6af4-6af8-4296-acd9-b428419aa0ae')
+        .send()
+      expect(res.status).toBe(httpStatus.notFound)
+    })
+
     it('should return 422 for an invalid request body', async () => {
       await initDb()
       const event = await getFirstEvent()
@@ -214,6 +221,39 @@ describe('/api/events', () => {
 
       it('should return 400 for using an integer instead of a UUIDv4', async () => {
         const res = await request(server).put('/api/events/1').send()
+        expect(res.status).toBe(httpStatus.badRequest)
+      })
+    })
+  })
+
+  // ======================================================
+
+  describe('DELETE /:id', () => {
+    it('should return 404 if the event does not exist', async () => {
+      const res = await request(server)
+        .delete('/api/events/6f5a6af4-6af8-4296-acd9-b428419aa0ae')
+        .send()
+      expect(res.status).toBe(httpStatus.notFound)
+    })
+
+    it('should return 204 upon successful deletion of the given Event', async () => {
+      await initDb()
+      const event = await getFirstEvent()
+
+      const res = await request(server).delete(`/api/events/${event.id}`).send()
+      expect(res.status).toBe(httpStatus.noContent)
+    })
+
+    describe('Route parameters (entity id)', () => {
+      it('should return 400 for an invalid UUIDv4', async () => {
+        const res = await request(server)
+          .delete('/api/events/hello-there')
+          .send()
+        expect(res.status).toBe(httpStatus.badRequest)
+      })
+
+      it('should return 400 for using an integer instead of a UUIDv4', async () => {
+        const res = await request(server).delete('/api/events/1').send()
         expect(res.status).toBe(httpStatus.badRequest)
       })
     })
