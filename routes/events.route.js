@@ -18,8 +18,33 @@ router.post('/', async (req, res, next) => {
       .send(error.details[0].message)
   }
 
-  const startDate = req.body.startDate
-  const endDate = req.body.endDate
+  const start = new Date(req.body.startDate)
+  const end = new Date(req.body.endDate)
+  const predicates = [
+    {
+      start_date: {
+        [Op.between]: [start, end],
+      },
+      end_date: {
+        [Op.between]: [start, end],
+      },
+    },
+  ]
+
+  try {
+    const count = await Event.count({
+      where: predicates,
+    })
+    if (count) {
+      return res
+        .status(httpStatus.unprocessableEntity)
+        .send(
+          'An event exists within the desired time span. Please choose another time interval.'
+        )
+    }
+  } catch (e) {
+    next(e)
+  }
 
   try {
     const event = await Event.create(req.body)
