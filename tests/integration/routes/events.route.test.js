@@ -88,6 +88,44 @@ describe('/api/events', () => {
   })
 
   // ======================================================
+
+  describe('GET /', () => {
+    it('should return 200', async () => {
+      const res = await request(server).get('/api/events').send()
+      expect(res.status).toBe(httpStatusCodes.ok)
+    })
+
+    describe('With query parameters for the date interval', () => {
+      it('should return 400 for not providing the "endDate" along with the "startDate"', async () => {
+        const res = await request(server)
+          .get('/api/events?startDate=2020-12-12')
+          .send()
+        expect(res.status).toBe(httpStatusCodes.badRequest)
+      })
+
+      it('should return 400 for not providing the "startDate" along with the "endDate"', async () => {
+        const res = await request(server)
+          .get('/api/events?endDate=2020-12-12')
+          .send()
+        expect(res.status).toBe(httpStatusCodes.badRequest)
+      })
+
+      it('should return 200 with valid query parameters in Date Format', async () => {
+        const res = await request(server)
+          .get('/api/events?startDate=2020-12-12&endDate=2020-12-12')
+          .send()
+        expect(res.status).toBe(httpStatusCodes.ok)
+      })
+
+      it('should return 200 with valid query parameters in milliseconds since epoch', async () => {
+        const res = await request(server)
+          .get('/api/events?startDate=1608469694868&endDate=1609074494868')
+          .send()
+        expect(res.status).toBe(httpStatusCodes.ok)
+      })
+    })
+  })
+
   // ======================================================
   // ======================================================
 })
