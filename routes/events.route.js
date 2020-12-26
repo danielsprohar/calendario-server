@@ -21,7 +21,7 @@ router.post('/', async (req, res, next) => {
   const start = new Date(req.body.startDate)
   const end = new Date(req.body.endDate)
 
-  if (!Event.validateDateInterval(start, end)) {
+  if (!Event.isValidDateInterval(start, end)) {
     return res
       .status(httpStatus.unprocessableEntity)
       .send(
@@ -44,7 +44,8 @@ router.post('/', async (req, res, next) => {
     const count = await Event.count({
       where: predicates,
     })
-    if (count) {
+
+    if (count > 0 && !isAllDayEvent(start, end)) {
       return res
         .status(httpStatus.unprocessableEntity)
         .send(
@@ -179,7 +180,7 @@ router.put('/:id', async (req, res, next) => {
     }
 
     Object.assign(event, req.body)
-    if (!Event.validateDateInterval(event.startDate, event.endDate)) {
+    if (!Event.isValidDateInterval(event.startDate, event.endDate)) {
       return res
         .status(httpStatus.unprocessableEntity)
         .send(
@@ -219,6 +220,44 @@ router.delete('/:id', async (req, res, next) => {
     next(e)
   }
 })
+
+// ===========================================================================
+// Facilitators
+// ===========================================================================
+
+/**
+ * Checks if the given dates are on the same day.
+ * @param {Date} startDate The start date
+ * @param {Date} endDate The end date
+ */
+function isSameDay(startDate, endDate) {
+  const a = new Date(startDate)
+  const b = new Date(endDate)
+
+  return (
+    a.getDate() === b.getDate() &&
+    a.getMonth() === b.getMonth() &&
+    a.getFullYear() === b.getFullYear()
+  )
+}
+
+/**
+ * Checks if the given dates constitute an all-day event.
+ * @param {Date} startDate The start date
+ * @param {Date} endDate The end date
+ */
+function isAllDayEvent(startDate, endDate) {
+  const a = new Date(startDate)
+  const b = new Date(endDate)
+
+  return (
+    isSameDay(a, b) &&
+    a.getHours() === 0 &&
+    a.getMinutes() === 0 &&
+    b.getMinutes() === 0 &&
+    b.getHours() === 0
+  )
+}
 
 // ===========================================================================
 

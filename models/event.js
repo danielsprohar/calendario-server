@@ -56,7 +56,7 @@ class Event extends Model {
     return schema.validate({ id })
   }
 
-  static validateDateInterval(startDate, endDate) {
+  static isValidDateInterval(startDate, endDate) {
     const s = new Date(startDate)
     const e = new Date(endDate)
     return s.valueOf() <= e.valueOf()
