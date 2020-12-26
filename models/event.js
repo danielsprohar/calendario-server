@@ -14,6 +14,7 @@ const repeatValues = [
   'monthly',
   'annually',
   'every weekday',
+  'every weekend',
 ]
 
 // ===========================================================================
@@ -25,8 +26,8 @@ class Event extends Model {
     const schema = Joi.object({
       id: Joi.string(),
       title: Joi.string().max(512).required(),
-      startDate: Joi.date().required(),
-      endDate: Joi.date().required(),
+      startDate: Joi.date(),
+      endDate: Joi.date(),
       status: Joi.string().valid(...statuses),
       repeats: Joi.string().valid(...repeatValues),
       description: Joi.string().max(2048),
@@ -48,6 +49,10 @@ class Event extends Model {
     return schema.validate(model)
   }
 
+  /**
+   * Checks if the given `id` is a valid `UUIDv4`.
+   * @param {string} id The `id` string to check.
+   */
   static validateGuid(id) {
     const schema = Joi.object({
       id: Joi.string().guid({ version: 'uuidv4' }),
@@ -56,6 +61,13 @@ class Event extends Model {
     return schema.validate({ id })
   }
 
+  /**
+   * Checks if the `startDate` is less than or equal to the `endDate`.
+   *
+   * If so, then `true`, else `false`.
+   * @param {Date} startDate The start date.
+   * @param {Date} endDate The end date.
+   */
   static isValidDateInterval(startDate, endDate) {
     const s = new Date(startDate)
     const e = new Date(endDate)
@@ -95,11 +107,9 @@ Event.init(
     },
     startDate: {
       type: DataTypes.DATE,
-      allowNull: false,
     },
     endDate: {
       type: DataTypes.DATE,
-      allowNull: false,
     },
     repeats: {
       type: DataTypes.ENUM,
