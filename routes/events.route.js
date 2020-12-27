@@ -19,7 +19,7 @@ router.post('/', async (req, res, next) => {
   }
 
   if (req.body.startDate && req.body.endDate) {
-    if (!isValidDateInterval(start, end)) {
+    if (!isValidDateInterval(req.body.startDate, req.body.endDate)) {
       return res
         .status(httpStatus.unprocessableEntity)
         .send(
@@ -27,7 +27,7 @@ router.post('/', async (req, res, next) => {
         )
     }
 
-    if (!(await validateInsert(start, end))) {
+    if (!(await validateInsert(req.body.startDate, req.body.endDate))) {
       return res
         .status(httpStatus.unprocessableEntity)
         .send(
@@ -267,6 +267,8 @@ async function validateInsert(startDate, endDate) {
     return true
   }
 
+  const start = new Date(startDate)
+  const end = new Date(endDate)
   const predicates = {
     start_date: {
       [Op.between]: [start, end],
