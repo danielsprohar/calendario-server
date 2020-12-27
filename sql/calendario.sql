@@ -6,11 +6,11 @@ CREATE DATABASE calendario WITH TEMPLATE = template0 ENCODING = 'UTF8' LOCALE = 
 
 \connect calendario
 
-DROP TYPE IF EXISTS enum_events_status;
+DROP TYPE IF EXISTS enum_events_status CASCADE;
 CREATE TYPE enum_events_status AS ENUM
     ('busy', 'free');
 
-DROP TYPE IF EXISTS enum_events_repeats; 
+DROP TYPE IF EXISTS enum_events_repeats CASCADE; 
 CREATE TYPE enum_events_repeats AS ENUM
     ('never', 'daily', 'weekly', 'monthly', 'annually', 'every weekday', 'every weekend');
 
