@@ -3,7 +3,7 @@ require('dotenv').config()
 
 module.exports = new Sequelize(process.env.POSTGRES_URL, {
   dialect: 'postgres',
-  logging: false,
+  // logging: true,
   pool: {
     max: 5,
     min: 1,

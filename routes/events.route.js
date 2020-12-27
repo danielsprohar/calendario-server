@@ -18,42 +18,22 @@ router.post('/', async (req, res, next) => {
       .send(error.details[0].message)
   }
 
-  const start = new Date(req.body.startDate)
-  const end = new Date(req.body.endDate)
+  if (req.body.startDate && req.body.endDate) {
+    if (!isValidDateInterval(start, end)) {
+      return res
+        .status(httpStatus.unprocessableEntity)
+        .send(
+          'Invalid date interval. The "startDate" must be less than or equal to the "endDate"'
+        )
+    }
 
-  if (!Event.isValidDateInterval(start, end)) {
-    return res
-      .status(httpStatus.unprocessableEntity)
-      .send(
-        'Invalid date interval. The "startDate" must be less than or equal to the "endDate"'
-      )
-  }
-
-  const predicates = [
-    {
-      start_date: {
-        [Op.between]: [start, end],
-      },
-      end_date: {
-        [Op.between]: [start, end],
-      },
-    },
-  ]
-
-  try {
-    const count = await Event.count({
-      where: predicates,
-    })
-
-    if (count > 0 && !isAllDayEvent(start, end)) {
+    if (!(await validateInsert(start, end))) {
       return res
         .status(httpStatus.unprocessableEntity)
         .send(
           'An event exists within the desired time span. Please choose another time interval.'
         )
     }
-  } catch (e) {
-    next(e)
   }
 
   try {
@@ -77,6 +57,10 @@ router.get('/', async (req, res, next) => {
     order: ['startDate'],
     limit: pageSize,
     offset: pageIndex * pageSize,
+    where: {
+      // Gets the events that occur "every weekday" and "every weekend"
+      [Op.or]: [{ start_date: null, end_date: null }],
+    },
   }
 
   if (
@@ -90,8 +74,9 @@ router.get('/', async (req, res, next) => {
       )
   }
 
+  // Check if there is a date interval
   if (req.query.startDate && req.query.endDate) {
-    // Check if the query parameters are in '2020-03-15' format or milliseconds since epoch.
+    // Check if the query parameters are in "YYYY-MM-DD" format or "milliseconds since epoch".
     const start = new Date(
       req.query.startDate.search(regexPatterns.onlyDigits) === -1
         ? req.query.startDate
@@ -103,21 +88,29 @@ router.get('/', async (req, res, next) => {
         : +req.query.endDate
     )
 
-    options.where = [
-      {
-        start_date: {
-          [Op.between]: [start, end],
-        },
-        end_date: {
-          [Op.between]: [start, end],
-        },
+    // Gets all the events that occur within the given date interval.
+    const withinDateIntervalPredicate = {
+      start_date: {
+        [Op.between]: [start, end],
       },
-    ]
+      end_date: {
+        [Op.between]: [start, end],
+      },
+    }
+
+    // Gets all the "weekly", "monthly", "yearly" recurring events
+    // that occur within the given date interval.
+    const recurringPredicate = {
+      start_date: {
+        [Op.between]: [start, end],
+      },
+    }
+
+    options.where[Op.or].push(withinDateIntervalPredicate, recurringPredicate)
   }
 
   try {
     const { count, rows: events } = await Event.findAndCountAll(options)
-
     return res.json({
       count,
       pageIndex,
@@ -257,6 +250,56 @@ function isAllDayEvent(startDate, endDate) {
     b.getMinutes() === 0 &&
     b.getHours() === 0
   )
+}
+
+/**
+ * Checks if the starting date and ending date
+ * of the event is allows for the creation of a new record.
+ * @param {Date} startDate The start date
+ * @param {Date} endDate The end date
+ */
+async function validateInsert(startDate, endDate) {
+  if (!startDate || !endDate) {
+    // A recurring event is a valid record.
+    return true
+  }
+  if (isAllDayEvent(startDate, endDate)) {
+    return true
+  }
+
+  const predicates = {
+    start_date: {
+      [Op.between]: [start, end],
+    },
+    end_date: {
+      [Op.between]: [start, end],
+    },
+  }
+
+  try {
+    const count = await Event.count({
+      where: predicates,
+    })
+    return count === 0
+  } catch (e) {
+    return false
+  }
+}
+
+/**
+ * Checks if the `startDate` is less than or equal to the `endDate`.
+ *
+ * If so, then `true`, else `false`.
+ * @param {Date} startDate The start date.
+ * @param {Date} endDate The end date.
+ */
+function isValidDateInterval(startDate, endDate) {
+  if (!startDate || !endDate) {
+    return false
+  }
+  const s = new Date(startDate)
+  const e = new Date(endDate)
+  return s.valueOf() <= e.valueOf()
 }
 
 // ===========================================================================

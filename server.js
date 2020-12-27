@@ -29,8 +29,11 @@ const server = app.listen(port, () => {
   winston.info('Now listening on port ' + port)
 })
 
-database.sync().then(() => {
-  winston.info('Connected to database')
-})
+// Uncomment the lines below to let Sequelize create the database
+// database.sync().then(() => {
+//   winston.info('Connected to database')
+// })
+
+database.validate().then(() => winston.info('Connected to database'))
 
 module.exports = server

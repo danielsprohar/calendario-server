@@ -24,7 +24,7 @@ const repeatValues = [
 class Event extends Model {
   static validateCreateModel(model) {
     const schema = Joi.object({
-      id: Joi.string(),
+      id: Joi.string().guid({ version: 'uuidv4' }),
       title: Joi.string().max(512).required(),
       startDate: Joi.date(),
       endDate: Joi.date(),
@@ -59,19 +59,6 @@ class Event extends Model {
     })
 
     return schema.validate({ id })
-  }
-
-  /**
-   * Checks if the `startDate` is less than or equal to the `endDate`.
-   *
-   * If so, then `true`, else `false`.
-   * @param {Date} startDate The start date.
-   * @param {Date} endDate The end date.
-   */
-  static isValidDateInterval(startDate, endDate) {
-    const s = new Date(startDate)
-    const e = new Date(endDate)
-    return s.valueOf() <= e.valueOf()
   }
 }
 
