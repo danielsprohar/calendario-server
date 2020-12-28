@@ -52,7 +52,7 @@ router.post('/', async (req, res, next) => {
 
 router.get('/', async (req, res, next) => {
   const pageIndex = req.query.pageIndex || 0
-  const pageSize = req.query.pageSize || 30
+  const pageSize = req.query.pageSize || 50
   const options = {
     order: ['startDate'],
     limit: pageSize,
@@ -63,6 +63,7 @@ router.get('/', async (req, res, next) => {
     },
   }
 
+  // If we are querying on a date interval, validate it.
   if (
     (req.query.startDate && !req.query.endDate) ||
     (req.query.endDate && !req.query.startDate)
@@ -88,6 +89,10 @@ router.get('/', async (req, res, next) => {
         : +req.query.endDate
     )
 
+    if (!isValidDateInterval(start, end)) {
+      return res.status(httpStatus.badRequest).send('Invalid date')
+    }
+
     // Gets all the events that occur within the given date interval.
     const withinDateIntervalPredicate = {
       start_date: {
@@ -98,11 +103,14 @@ router.get('/', async (req, res, next) => {
       },
     }
 
-    // Gets all the "weekly", "monthly", "yearly" recurring events
-    // that occur within the given date interval.
+    // TODO: Redesign database to handle all recurring events
+    // Get all the recurring events that occur within the given date interval.
     const recurringPredicate = {
       start_date: {
         [Op.between]: [start, end],
+      },
+      repeats: {
+        [Op.in]: ['daily', 'weekly', 'monthly', 'annually'],
       },
     }
 

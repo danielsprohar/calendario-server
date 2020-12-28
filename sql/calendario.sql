@@ -34,8 +34,14 @@ CREATE INDEX event_start_date
     (start_date ASC NULLS LAST)
     TABLESPACE pg_default;
 
-INSERT INTO events(title, status, start_date, end_date, repeats) 
-    VALUES ('Order takeout', 'busy', '2020-12-26 17:00:00-06', '2020-12-26 17:30:00-06', 'never'),
-            ('Open presents', 'busy', '2020-12-25 00:00:00-06', '2020-12-25 00:00:00-06', 'never'),
-            ('Be a bum', 'busy', '2020-12-25 00:00:00-06', '2020-12-25 00:00:00-06', 'never'),
-            ('Workout', 'busy', NULL, NULL, 'every weekday');
+INSERT INTO events(title, status, description, start_date, end_date, repeats) 
+    VALUES ('Order takeout', 'busy', NULL, '2020-12-26 17:00:00-06', '2020-12-26 17:30:00-06', 'never'),
+            ('Open presents', 'busy', NULL, '2020-12-25 00:00:00-06', '2020-12-25 00:00:00-06', 'never'),
+            ('Be a bum', 'busy', NULL, '2020-12-25 00:00:00-06', '2020-12-25 00:00:00-06', 'never'),
+            ('Workout', 'busy', 'This happens every weekday', NULL, NULL, 'every weekday'),
+            ('Pay water bill', 'free', 'This happens every month', '2021-01-01 00:00:00-06', NULL, 'monthly'),
+            ('Pay electric bill', 'free', 'This happens every month', '2021-01-01 00:00:00-06', NULL, 'monthly'),
+            ('Pay cell phone bill', 'free', 'This happens every month', '2021-01-15 00:00:00-06', NULL, 'monthly'),
+            ('Meet with accountant', 'free', 'This happens every month', '2021-01-15 09:00:00-06', '2021-01-15 10:00:00-06', 'monthly'),
+            ('Breakfast with the fam', 'busy', 'This happens every month', '2020-12-27 09:00:00-06', '2020-12-27 11:00:00-06', 'monthly'),
+            ('Go to the park', 'busy', 'This happens every weekend', NULL, NULL, 'every weekend');
